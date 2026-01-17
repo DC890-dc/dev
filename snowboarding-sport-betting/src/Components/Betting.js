@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 
+// Event data with riders and their odds/money multipliers
 const events = [
   {
     id: 1,
@@ -14,14 +15,15 @@ const events = [
 ]
 
 function Betting() {
-  const [selectedRider, setSelectedRider] = useState(null)
-  const [betAmount, setBetAmount] = useState(0)
-  const [wallet, setWallet] = useState(1000)
-  const [loan, setLoan] = useState(0)
-  const [message, setMessage] = useState("")
-  const [timerMs] = useState(10000)
+  // State variables
+  const [selectedRider, setSelectedRider] = useState(null) // rider selected by the user
+  const [betAmount, setBetAmount] = useState(0) // amount user wants to bet
+  const [wallet, setWallet] = useState(1000) // starting wallet balance
+  const [loan, setLoan] = useState(0) // current loan balance
+  const [message, setMessage] = useState("") // feedback messages
+  const [timerMs] = useState(10000) // delay before bet results in ms
 
-  // Detect zero wallet and show loan message
+  // Detect if wallet reaches zero and no loan exists
   useEffect(() => {
     if (wallet <= 0 && loan === 0) {
       setWallet(0)
@@ -29,7 +31,10 @@ function Betting() {
     }
   }, [wallet, loan])
 
-  // Loan function, supports normal and high-risk loans
+  /**
+   * Handles loan requests
+   * @param {boolean} highRisk - If true, gives a high-interest 4x loan
+   */
   const takeLoan = (highRisk = false) => {
     if (wallet > 0) {
       setMessage("You can only take a loan when your wallet is empty.")
@@ -54,6 +59,10 @@ function Betting() {
     )
   }
 
+  /**
+   * Places a bet on the selected rider
+   * Calculates win/loss, updates wallet and loan accordingly
+   */
   const placeBet = () => {
     if (!selectedRider) {
       setMessage("Select a rider first!")
@@ -68,17 +77,19 @@ function Betting() {
       return
     }
 
+    // Determine if the user wins based on odds
     const winChance = Math.max(0.05, 1 - selectedRider.odds / 10)
     const win = Math.random() < winChance
 
     setMessage(`Waiting for results... ${timerMs / 1000} seconds`)
 
+    // Delay result to simulate betting suspense
     setTimeout(() => {
       setWallet(prevWallet => {
         let updatedWallet =
           prevWallet - betAmount + (win ? betAmount * selectedRider.moneyMultiplier : 0)
 
-        // Handle loan repayment automatically if winnings cover it
+        // Handle loan repayment if user wins and owes money
         if (win && loan > 0) {
           if (updatedWallet >= loan) {
             updatedWallet -= loan
@@ -104,6 +115,7 @@ function Betting() {
       })
     }, timerMs)
 
+    // Reset bet form
     setBetAmount(0)
     setSelectedRider(null)
   }
@@ -114,28 +126,27 @@ function Betting() {
 
       <h2 className="text-light">Place Your Bet</h2>
 
+      {/* Display wallet and loan status */}
       <p className="text-light">
         <strong>Wallet:</strong> ${wallet.toFixed(2)}
       </p>
-
       <p className="text-light">
         <strong>Loan:</strong> {loan > 0 ? `$${loan.toFixed(2)} owed` : "None"}
       </p>
 
-      {/* Normal loan button */}
+      {/* Buttons for normal or high-risk loans */}
       {wallet === 0 && loan === 0 && (
         <button className="btn btn-warning mb-2" onClick={() => takeLoan(false)}>
           Take $500 Loan (20% Interest)
         </button>
       )}
-
-      {/* High-risk loan button */}
       {wallet === 0 && loan > 0 && (
         <button className="btn btn-danger mb-3" onClick={() => takeLoan(true)}>
           Take $500 High-Risk Loan (4× Interest)
         </button>
       )}
 
+      {/* Render each event and its riders */}
       {events.map(event => (
         <div key={event.id} className="card mt-3">
           <div className="card-body">
@@ -153,6 +164,7 @@ function Betting() {
         </div>
       ))}
 
+      {/* Bet slip panel */}
       {selectedRider && (
         <div className="card mt-4 p-3">
           <h5>Bet Slip</h5>
@@ -177,11 +189,12 @@ function Betting() {
         </div>
       )}
 
+      {/* Message display */}
       {message && <div className="alert alert-info mt-3">{message}</div>}
 
       <br /><br /><br />
-      <p className="text-light">Lost all money get a loan or even a second loan!</p>
-      <p className="text-light"> You can always call 1-800-SNOWBET to add funds to your wallet with our 24/7 customer service.</p>
+      <p className="text-light">Lost all money? Get a loan or even a second loan!</p>
+      <p className="text-light">You can always call 1-800-SNOWBET to add funds to your wallet with our 24/7 customer service.</p>
     </div>
   )
 }
